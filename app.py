@@ -1,45 +1,48 @@
 from flask import Flask, request, jsonify
 import pandas as pd
-from scipy import stats
+import json
 
 app = Flask(__name__)
 
-
-@app.route("/calculate", methods=["POST"])
-def calculate_statistics():
-    # Check if a file is provided
-    if "file" not in request.files:
+@app.route('/processdata', methods=['POST'])
+def calculate_stats():
+    if 'file' not in request.files:
         return jsonify({"error": "No file provided"}), 400
 
-    file = request.files["file"]
-    column_name = request.form.get("column_name")
+    file = request.files['file']
+    column_name = request.form.get('column_name')
 
     if not column_name:
         return jsonify({"error": "No column name provided"}), 400
 
     try:
-        # Read the CSV file
         df = pd.read_csv(file)
 
-        # Check if the column exists in the DataFrame
         if column_name not in df.columns:
-            return (
-                jsonify({"error": f"Column '{column_name}' not found in the dataset"}),
-                400,
-            )
+            return jsonify({"error": f"Column '{column_name}' not found in the dataset"}), 400
 
-        # Calculate mean, median, and mode
-        mean = df[column_name].mean()
-        median = df[column_name].median()
-        mode = stats.mode(df[column_name]).mode[0]  # mode returns a ModeResult object
+        if not pd.api.types.is_numeric_dtype(df[column_name]):
+            return jsonify({"error": f"Column '{column_name}' must contain numeric values"}), 400
 
-        return jsonify(
-            {"column_name": column_name, "mean": mean, "median": median, "mode": mode}
+        min_value = df[column_name].min()
+        max_value = df[column_name].max()
+        mean_value = df[column_name].mean()
+
+        response_data = {
+            "column name": column_name,
+            "min": min_value,
+            "max": max_value,
+            "mean": mean_value
+        }
+
+        return app.response_class(
+            response=json.dumps(response_data, indent=2),
+            status=200,
+            mimetype='application/json'
         )
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)
