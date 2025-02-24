@@ -39,6 +39,9 @@ with open(filepath, "rb") as file:
 print(json.dumps(response.json(), indent=2))
 ```
 
+## UML Diagram
+![umldiagram](https://github.com/brandonpham13/cs361_msA/blob/main/images/microserviceA_uml.drawio.png)
+
 ## Notes
 - If a selected column contains at least one non-numeric value, this error will be returned:
 ```
